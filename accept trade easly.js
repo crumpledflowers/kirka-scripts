@@ -19,18 +19,15 @@
 
                         child.addEventListener("click", () => {
                             const match = child.innerText.match(/\/trade accept (\d+)/);
-                            if (match) {
-                                const code = match[1];
-                                const input = findChatInput();
+                            if (!match) return;
 
-                                if (input) {
-                                    lastTradeCode = code;
-                                    input.value = `/trade accept ${code}a`; // "a" for accept
-                                    input.focus();
-                                } else {
-                                    alert("Input field not found");
-                                }
-                            }
+                            const code = match[1];
+                            const input = findChatInput();
+                            if (!input) return alert("Input field not found");
+
+                            lastTradeCode = code;
+                            input.value = `/trade accept ${code}a`;
+                            input.focus();
                         });
                     }
                 }
@@ -40,14 +37,16 @@
 
     observer.observe(document, { subtree: true, childList: true });
 
-    document.addEventListener("keydown", (e) => {
+    // Watch the input field for changes (after sending accept)
+    const inputWatcher = setInterval(() => {
         const input = findChatInput();
+        if (!input || !lastTradeCode) return;
 
-        if (e.key === "Enter" && input && input.value.includes("/trade accept") && lastTradeCode) {
-            setTimeout(() => {
-                input.value = `/trade confirm ${lastTradeCode}q`; // "q" for confirm
-                input.focus();
-            }, 100);
+        // If input is empty (accept was sent), fill in confirm
+        if (input.value === '') {
+            input.value = `/trade confirm ${lastTradeCode}q`;
+            input.focus();
+            lastTradeCode = null; // reset so it doesn't keep overwriting
         }
-    });
+    }, 50); // check every 50ms
 })();
